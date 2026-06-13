@@ -1,21 +1,126 @@
-# Autocite Workflow
+![Autocite overview](assets/img1.png)
 
-Autocite converts Word manuscript comments into verified EndNote CWYW temporary citations.
+# _Autocite_ is the fastest way to cite, using shorthands
 
-It extracts `.docx` comments, resolves reference instructions, prepares or verifies an EndNote library, inserts temporary citations such as `{Smith, 2024 #123}`, and writes a two-sheet audit workbook.
+Autocite is an LLM agent skill that converts Word comments into verified EndNote CWYW citations like `{Smith, 2024 #123}`, in a single click, directly in your manuscript file.
 
-## Contents
+Invoke `/autocite` followed by the following
+1. Path to the manuscript file
+2. _(Optional)_ Path to a folder with full-text publications to use *shorthands* and *cite-through*
+3. _(Optional)_ Any additional instructions, for example
+  - Only cite comments by specific author(s)
+  - Do not cite comments by specific author(s)
+  - Only cite comments in the Introduction and Discussion sections 
+  - Only cite comments before / after a specific date
 
-1. Requirements
-2. Installation
-3. First Run Check
-4. One-Command Early Run
-5. Basic Usage
-6. PubMed And DOI Lookup
-7. EndNote Requirement
-8. Run Status
-9. Output Safety
-10. Outputs
+Only high or moderate confidence citations are inserted. Low-confidence, ambiguous, unresolved, or disputed references are returned in the audit workbook only.
+
+An example prompt:
+```text
+/autocite 
+path/tomanuscript.docx
+my articles ./papers
+only cite for Jane Smith's comments
+```
+
+This creates a run folder and stops before manuscript editing until EndNote record numbers are verified.
+
+## Comment formats Autocite can read
+
+Autocite reads Word comment text, author and metadata, and the surrounding context to determine what citation is required.
+Autocite can recognise and create citations from any of the following formats:
+
+### 1. Shorthands:
+```text
+JACC
+Nature
+Chen
+```
+Where ```JACC```; ```Nature```; ```Chen``` are code terms, corresponding to PDFs with filenames containing, or exactly are, these terms. 
+
+### 2. Cite-thorugh shorthands: 
+```text
+Nature 12
+```
+This refers to the the 12th reference in the full-text PDF paper with the filename containing, or exactly is, the code `Nature`.
+
+```text
+Nature + 12, JACC 5-7
+```
+This refers to the paper encoded `Nature`, and
+the 12th reference in the full-text PDF paper with encoded `Nature`, and
+the 5th to 7th reference in the full-text PDF paper encoded `JACC`.
+
+![Cite-through shorthand example](assets/img2.png)
+
+### 3. DOI: 
+```text
+DOI 10.1161/CIRCULATIONAHA.123.000000
+```
+or
+```text
+https://doi.org/10.1000/example
+```
+
+### 4. Direct PMID:
+```text
+PMID 12345678
+```
+
+### 5. Partial citation:
+```text
+Smith 2024, Circulation, cardiovascular prevention trial
+```
+
+### 6. Partial or full article title, or link to online publication:
+```text
+Long-term cardiovascular outcomes after intensive blood pressure control
+https://www.ahajournals.org/doi/full/10.1161/CIRCULATIONAHA.124.070535
+```
+
+## Instructions you can give
+
+You can scope the run by comment author:
+
+```text
+Only cite for Dr Jane Smith's comments.
+Only process comments by Dr Lee.
+Ignore comments by Dr John Doe.
+```
+
+You can scope the run by Word comment date. Use `YYYY-MM-DD` dates to avoid ambiguity:
+
+```text
+Only process comments after 2026-01-01.
+Only process comments before 2026-03-31.
+Only process comments from 2026-01-01 to 2026-03-31.
+```
+
+You can also give safety instructions:
+```text
+Use the PDFs in ./papers as source papers.
+Use this EndNote template .enl and .Data folder.
+Prepare the candidate map only, do not edit the manuscript yet.
+Report low-confidence matches without inserting them.
+```
+
+By default, Autocite processes all Word comments unless you explicitly narrow the scope. When running the scripts manually, `docx_comment_audit.py` still extracts all comments. Apply author or date scope when selecting rows for candidate mapping, reconciliation, and insertion.
+
+## What Autocite returns
+
+When the full workflow completes, Autocite returns:
+
+1. An edited `.docx` with verified EndNote temporary citations inserted.
+2. A backup copy of the original `.docx`.
+3. `reference-citation-audit.xlsx`, with exactly two sheets:
+   - `Excluded Comments`
+   - `Resolved Comments`
+4. JSON and CSV logs for comment extraction, paper-code mapping, candidate references, EndNote record numbers, insertion, and verification.
+5. `status.json`, which records the run state.
+
+Only high or moderate confidence citations are inserted. Low-confidence, ambiguous, unresolved, or disputed references are returned in the audit workbook only.
+
+If EndNote is not ready, Autocite stops before editing the manuscript and returns the run folder with status `awaiting_endnote`.
 
 ## Requirements
 
@@ -101,8 +206,7 @@ If `pdftotext` cannot be installed automatically, install Poppler with your oper
 
 ## One-Command Early Run
 
-For the early deterministic phase, use:
-
+To extract manuscript comments and prepare candidate references (command-line only; first deterministic section of the workflow), run:
 ```bash
 python3 scripts/autocite_run.py \
   --docx "/path/to/manuscript.docx" \
