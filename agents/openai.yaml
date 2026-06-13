@@ -1,0 +1,7 @@
+interface:
+  display_name: "Autocite"
+  short_description: "Word comments to EndNote citations"
+  default_prompt: "Use $autocite for /autocite to convert DOCX comments into EndNote CWYW temporary citations."
+
+policy:
+  allow_implicit_invocation: true
