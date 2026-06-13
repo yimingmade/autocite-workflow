@@ -2,7 +2,7 @@
 
 # _Autocite_ is the fastest way to cite, using shorthands
 
-Autocite is an LLM agent skill that converts Word comments into verified EndNote CWYW citations like `{Smith, 2024 #123}`, in a single click, directly in your manuscript file.
+Autocite is a portable LLM agent skill that converts Word comments into verified EndNote CWYW citations like `{Smith, 2024 #123}`, in a single click, directly in your manuscript file.
 
 Invoke `/autocite` followed by the following
 1. Path to the manuscript file
@@ -25,7 +25,7 @@ only cite for Jane Smith's comments
 
 This creates a run folder and stops before manuscript editing until EndNote record numbers are verified.
 
-## Comment formats Autocite can read
+## Comments Autocite can read
 
 Autocite reads Word comment text, author and metadata, and the surrounding context to determine what citation is required.
 Autocite can recognise and create citations from any of the following formats:
@@ -105,6 +105,51 @@ Report low-confidence matches without inserting them.
 ```
 
 By default, Autocite processes all Word comments unless you explicitly narrow the scope. When running the scripts manually, `docx_comment_audit.py` still extracts all comments. Apply author or date scope when selecting rows for candidate mapping, reconciliation, and insertion.
+
+## How citations are found
+
+Autocite uses a conservative search cascade. PubMed, Crossref, OpenAlex, and PDFs help identify the right publication.
+
+Step by step:
+
+1. Autocite reads every in-scope Word comment.
+
+2. Autocite resolves shorthands and cite-through instructions from local PDFs. For example,
+   - If you provide a `papers` folder, Autocite builds a paper-code index from PDF filenames.
+   - `Nature` can refer to the source PDF coded as `Nature`.
+   - `Nature 12` can refer to the 12th reference inside that source PDF.
+   - `Nature + 12` can refer to both the `Nature` source PDF and its 12th reference.
+   - PDF reference lists are extracted with `pdftotext` (installed on first run if absent on device).
+
+3. Autocite searches EndNote when a usable title, DOI, PMID, or citation string is available.
+   - Exact DOI, PMID, title, author, and year matches are preferred.
+   - If a first EndNote search fails, Autocite tries cleaned, punctuation-stripped or partial title searches before marking the reference unresolved.
+
+4. If PubMed MCP is available, Autocite prioritises it for PubMed lookup.
+   - DOI and PMID lookups are preferred.
+   - Title plus author or year searches are used when DOI or PMID is missing.
+   - Any PubMed result must still match the intended title, first author, year, DOI, or PMID.
+
+5. If PubMed MCP is not available, Autocite uses public lookup fallbacks.
+   - NCBI E-utilities for PubMed search, PMID validation, and PubMed metadata.
+   - Crossref REST API for DOI metadata.
+   - OpenAlex as a fallback or enrichment source.
+
+6. If a reference is found outside EndNote, Autocite prepares it for EndNote.
+   - PubMed records may be imported as NBIB or RIS.
+   - DOI-confirmed records may be written as RIS.
+   - Local PDF or manually verified citation text may be written as RIS only when title, first author, and year are verified.
+
+7. Autocite reads the final EndNote library back before insertion.
+   - The final `{Author, Year #RecordNumber}` citation is created only after the record exists in the real `.enl` and `.Data/sdb/sdb.eni`.
+   - The `#RecordNumber` must come from EndNote.
+
+8. Autocite reconciles candidates and assigns confidence.
+   - `high`: DOI, PMID, or exact title, author, and year match.
+   - `moderate`: strong title and context match, with minor uncertainty.
+   - `low`: ambiguous, unresolved, disputed, missing source, weak match, or failed EndNote confirmation.
+
+Only `high` and `moderate` references are inserted into the manuscript. `low` confidence references are reported in the audit workbook.
 
 ## What Autocite returns
 
