@@ -25,7 +25,7 @@ only cite for Jane Smith's comments
 
 This creates a run folder and stops before manuscript editing until EndNote record numbers are verified.
 
-## Comments Autocite can read
+## 🗣️ Comments Autocite can read
 
 Autocite reads Word comment text, author and metadata, and the surrounding context to determine what citation is required.
 Autocite can recognise and create citations from any of the following formats:
@@ -106,7 +106,7 @@ Report low-confidence matches without inserting them.
 
 By default, Autocite processes all Word comments unless you explicitly narrow the scope. When running the scripts manually, `docx_comment_audit.py` still extracts all comments. Apply author or date scope when selecting rows for candidate mapping, reconciliation, and insertion.
 
-## How citations are found
+## 🔺 How citations are found
 
 Autocite uses a conservative search cascade. PubMed, Crossref, OpenAlex, and PDFs help identify the right publication.
 
@@ -151,7 +151,7 @@ Step by step:
 
 Only `high` and `moderate` references are inserted into the manuscript. `low` confidence references are reported in the audit workbook.
 
-## What Autocite returns
+## ➡️ What Autocite returns
 
 When the full workflow completes, Autocite returns:
 
